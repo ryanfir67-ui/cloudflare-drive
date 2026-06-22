@@ -6,7 +6,7 @@ compatibility_date = "2026-06-01"
 # npx wrangler r2 bucket create upload-download-10gb
 [[r2_buckets]]
 binding = "BUCKET"
-bucket_name = "upload-download-10gb"
+bucket_name = "ryy-storage"
 
 # Opsional: batasi akses upload dengan password sederhana.
 # Set via dashboard Variables & Secrets: UPLOAD_PASSWORD = password_anda
