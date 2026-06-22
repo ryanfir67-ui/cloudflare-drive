@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>R2 Uploader - Cloudflare</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f6f9fc 0%, #e9f1f8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 20, 30, 0.12);
+            padding: 30px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0b1c2f;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            background: #f6821f;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 14px;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
+        }
+
+        .subtitle {
+            color: #5a6d7e;
+            font-size: 14px;
+            margin-bottom: 24px;
+            padding: 10px 16px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border-left: 4px solid #f6821f;
+        }
+
+        .subtitle code {
+            background: #e9edf2;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #c4551e;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .panel {
+            background: #f8fafc;
+            border-radius: 18px;
+            padding: 20px;
+            border: 1px solid #e9edf2;
+        }
+
+        .panel h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e2c3a;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Upload Panel */
+        .drop-zone {
+            border: 2px dashed #cdd7e2;
+            border-radius: 16px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            background: white;
+        }
+
+        .drop-zone:hover {
+            border-color: #f6821f;
+            background: #fef8f0;
+        }
+
+        .drop-zone.dragover {
+            border-color: #f6821f;
+            background: #fef3e9;
+        }
+
+        .drop-zone .icon {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .drop-zone p {
+            color: #5a6d7e;
+            font-size: 14px;
+        }
+
+        .drop-zone .small {
+            font-size: 12px;
+            color: #8a9aa8;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-status {
+            margin-top: 14px;
+            background: white;
+            padding: 10px 16px;
+            border-radius: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e9edf2;
+            font-size: 13px;
+        }
+
+        .file-status .name {
+            font-weight: 500;
+            color: #0b1c2f;
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-status .size {
+            color: #5a6d7e;
+            background: #eef2f6;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 11px;
+        }
+
+        .progress-wrap {
+            margin-top: 12px;
+            background: #e9edf2;
+            border-radius: 40px;
+            height: 6px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #f6821f, #f9a85b);
+            border-radius: 40px;
+            transition: width 0.3s;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .btn {
+            padding: 8px 24px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.15s;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: #f6821f;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #e07114;
+            transform: scale(0.98);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #e9edf2;
+            color: #1e2c3a;
+        }
+
+        .btn-secondary:hover {
+            background: #d5dce4;
+        }
+
+        .btn-small {
+            padding: 5px 16px;
+            font-size: 12px;
+            flex: 0 0 auto;
+        }
+
+        /* File List */
+        .file-list {
+            list-style: none;
+            max-height: 340px;
+            overflow-y: auto;
+        }
+
+        .file-list li {
+            background: white;
+            padding: 10px 14px;
+            border-radius: 40px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #e9edf2;
+            font-size: 13px;
+        }
+
+        .file-list .fname {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 450;
+        }
+
+        .file-list .fsize {
+            color: #5a6d7e;
+            background: #eef2f6;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .file-list .download-link {
+            color: #f6821f;
+            text-decoration: none;
+            padding: 4px 12px;
+            border-radius: 30px;
+            background: #fef3e9;
+            font-weight: 500;
+            font-size: 12px;
+            transition: 0.1s;
+            white-space: nowrap;
+        }
+
+        .file-list .download-link:hover {
+            background: #fde4d2;
+        }
+
+        .file-list .delete-btn {
+            background: none;
+            border: none;
+            color: #b13e3e;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 4px;
+        }
+
+        .file-list .delete-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #8a9aa8;
+            padding: 30px 10px !important;
+            background: white !important;
+            border: 1px dashed #dbe1e8 !important;
+            justify-content: center !important;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .toast {
+            margin-top: 12px;
+            padding: 10px 16px;
+            border-radius: 40px;
+            font-size: 13px;
+            text-align: center;
+            display: none;
+        }
+
+        .toast.success {
+            display: block;
+            background: #e6f7ed;
+            color: #0f7b4b;
+        }
+
+        .toast.error {
+            display: block;
+            background: #fde8e8;
+            color: #b13e3e;
+        }
+
+        .toast.info {
+            display: block;
+            background: #e8f0fe;
+            color: #1a5c9e;
+        }
+
+        .footer {
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid #e9edf2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 12px;
+            color: #5a6d7e;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-dot.online {
+            background: #22c55e;
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+        }
+
+        @media (max-width: 700px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- HEADER -->
+        <div class="header">
+            <h1>
+                ☁️ R2 Uploader
+                <span class="badge">Cloudflare</span>
+            </h1>
+            <span style="font-size:13px; color:#5a6d7e;">⬆️⬇️ siap pakai</span>
+        </div>
+        <div class="subtitle">
+            ⚡ Upload &amp; download file ke Cloudflare R2 — <strong>tanpa ribet</strong>.
+            Cukup ganti <code>WORKER_URL</code> &amp; <code>R2_BASE</code> di script.
+        </div>
+
+        <!-- GRID -->
+        <div class="grid">
+
+            <!-- PANEL UPLOAD -->
+            <div class="panel">
+                <h2>📤 Upload File</h2>
+
+                <div id="dropZone" class="drop-zone">
+                    <span class="icon">📂</span>
+                    <p><strong>Seret file ke sini</strong></p>
+                    <p class="small">atau klik untuk pilih file</p>
+                    <input type="file" id="fileInput" />
+                </div>
+
+                <div class="file-status">
+                    <span class="name" id="fileNameDisplay">Belum ada file</span>
+                    <span class="size" id="fileSizeDisplay">-</span>
+                </div>
+
+                <div class="progress-wrap">
+                    <div class="progress-bar" id="uploadProgress"></div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-primary" id="uploadBtn" disabled>⬆ Upload</button>
+                    <button class="btn btn-secondary" id="clearBtn">✕ Batal</button>
+                </div>
+
+                <div id="uploadToast" class="toast"></div>
+            </div>
+
+            <!-- PANEL DOWNLOAD -->
+            <div class="panel">
+                <h2>📋 Daftar File</h2>
+
+                <div class="toolbar">
+                    <button class="btn btn-secondary btn-small" id="refreshBtn">⟳ Refresh</button>
+                    <button class="btn btn-secondary btn-small" id="clearAllBtn" style="color:#b13e3e;">🗑 Hapus Semua</button>
+                </div>
+
+                <ul class="file-list" id="fileList">
+                    <li class="empty-state">📭 Memuat daftar file...</li>
+                </ul>
+
+                <div id="downloadToast" class="toast"></div>
+            </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            <span>
+                <span class="status-dot online" id="statusDot"></span>
+                <span id="statusText">Connected</span>
+            </span>
+            <span>🔗 <span id="baseUrlDisplay">https://your-bucket.r2.dev</span></span>
+            <span>⚡ deploy ke Cloudflare Pages</span>
+        </div>
+
+    </div>
+
+    <script>
+        // ============================================================
+        //  KONFIGURASI — GANTI DENGAN MILIKMU
+        // ============================================================
+
+        // URL Worker API (untuk list, presigned URL, delete)
+        const WORKER_URL = 'https://r2-upload-api.your-worker.workers.dev';
+
+        // Public URL R2 bucket (untuk download langsung)
+        const R2_BASE = 'https://pub-xxxxxxxxxxxxxxx.r2.dev';
+
+        // ============================================================
+        //  JANGAN UBAH DI BAWAH INI (kecuali paham)
+        // ============================================================
+
+        // DOM refs
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const fileSizeDisplay = document.getElementById('fileSizeDisplay');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const uploadToast = document.getElementById('uploadToast');
+        const fileList = document.getElementById('fileList');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const downloadToast = document.getElementById('downloadToast');
+        const baseUrlDisplay = document.getElementById('baseUrlDisplay');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+
+        let selectedFile = null;
+
+        // Helper
+        function formatSize(bytes) {
+            if (!bytes || bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function showToast(el, msg, type = 'info') {
+            el.textContent = msg;
+            el.className = 'toast ' + type;
+            el.style.display = 'block';
+            clearTimeout(el._timer);
+            el._timer = setTimeout(() => { el.style.display = 'none'; }, 5000);
+        }
+
+        function resetUpload() {
+            selectedFile = null;
+            fileNameDisplay.textContent = 'Belum ada file';
+            fileSizeDisplay.textContent = '-';
+            uploadProgress.style.width = '0%';
+            uploadBtn.disabled = true;
+            fileInput.value = '';
+        }
+
+        // ========== FILE LIST ==========
+        async function fetchFiles() {
+            try {
+                const res = await fetch(`${WORKER_URL}/list`);
+                if (!res.ok) throw new Error('Gagal fetch list');
+                const files = await res.json();
+                renderFileList(files);
+                statusDot.className = 'status-dot online';
+                statusText.textContent = 'Connected';
+            } catch (err) {
+                console.error(err);
+                fileList.innerHTML =
+                    `<li class="empty-state">⚠️ Gagal memuat daftar. Pastikan Worker aktif.</li>`;
+                statusDot.className = 'status-dot offline';
+                statusText.textContent = 'Offline';
+            }
+        }
+
+        function renderFileList(files) {
+            if (!files || files.length === 0) {
+                fileList.innerHTML = `<li class="empty-state">📭 Belum ada file</li>`;
+                return;
+            }
+            fileList.innerHTML = files.map(f => {
+                const name = f.name || 'file';
+                const size = f.size || 0;
+                const url = `${R2_BASE}/${encodeURIComponent(name)}`;
+                return `<li>
+                    <span class="fname">📄 ${name}</span>
+                    <span class="fsize">${formatSize(size)}</span>
+                    <a href="${url}" class="download-link" target="_blank" download>⬇ Download</a>
+                    <button class="delete-btn" data-filename="${name}" title="Hapus">✕</button>
+                </li>`;
+            }).join('');
+
+            // Event delete
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => deleteFile(btn.dataset.filename));
+            });
+        }
+
+        // ========== DELETE FILE ==========
+        async function deleteFile(filename) {
+            if (!confirm(`Hapus file "${filename}"?`)) return;
+            try {
+                const res = await fetch(`${WORKER_URL}/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename })
+                });
+                if (!res.ok) throw new Error('Gagal hapus');
+                showToast(downloadToast, `✅ "${filename}" berhasil dihapus`, 'success');
+                fetchFiles();
+            } catch (err) {
+                showToast(downloadToast, `❌ ${err.message}`, 'error');
+            }
+        }
+
+        // ========== CLEAR ALL ==========
+        async function clearAllFiles() {
+            if (!confirm('Hapus SEMUA file? Tindakan ini tidak bisa dibatalkan!')) return;
+            try {
+                // Get all files first
+                const res = await fetch(`${WORKER_URL}/list`);
+                const files = await res.json();
+                if (!files || files.length === 0) {
+                    showToast(downloadToast, '📭 Tidak ada file untuk dihapus', 'info');
+                    return;
+                }
+
+                let deleted = 0;
+                for (const f of files) {
+                    try {
+                        await fetch(`${WORKER_URL}/delete`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ filename: f.name })
+                        });
+                        deleted++;
+                    } catch (e) { console.error(e); }
+                }
+                showToast(downloadToast, `✅ ${deleted} file berhasil dihapus`, 'success');
+                fetchFiles();
+            } catch (err) {
+                showToast(downloadToast, `❌ ${err.message}`, 'error');
+            }
+        }
+
+        // ========== UPLOAD ==========
+        async function uploadFile(file) {
+            if (!file) return;
+            uploadBtn.disabled = true;
+            uploadToast.style.display = 'none';
+
+            try {
+                // 1. Dapatkan presigned URL
+                const res = await fetch(`${WORKER_URL}/upload-url`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: file.name })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'Gagal dapat URL upload');
+                }
+
+                const data = await res.json();
+                if (!data.url) throw new Error('Tidak ada URL upload');
+
+                // 2. Upload ke R2
+                const xhr = new XMLHttpRequest();
+                xhr.open('PUT', data.url, true);
+                xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+
+                const uploadPromise = new Promise((resolve, reject) => {
+                    xhr.upload.addEventListener('progress', (e) => {
+                        if (e.lengthComputable) {
+                            const pct = Math.round((e.loaded / e.total) * 100);
+                            uploadProgress.style.width = pct + '%';
+                        }
+                    });
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) resolve();
+                        else reject(new Error(`HTTP ${xhr.status}`));
+                    };
+                    xhr.onerror = () => reject(new Error('Network error'));
+                    xhr.send(file);
+                });
+
+                await uploadPromise;
+                uploadProgress.style.width = '100%';
+                showToast(uploadToast, `✅ Upload berhasil: ${file.name}`, 'success');
+                resetUpload();
+                fetchFiles();
+
+            } catch (err) {
+                showToast(uploadToast, `❌ ${err.message || 'Upload gagal'}`, 'error');
+                uploadProgress.style.width = '0%';
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        }
+
+        // ========== EVENTS ==========
+
+        // Drop zone
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                const f = e.dataTransfer.files[0];
+                selectedFile = f;
+                fileNameDisplay.textContent = f.name;
+                fileSizeDisplay.textContent = formatSize(f.size);
+                uploadBtn.disabled = false;
+                uploadProgress.style.width = '0%';
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const f = e.target.files[0];
+                selectedFile = f;
+                fileNameDisplay.textContent = f.name;
+                fileSizeDisplay.textContent = formatSize(f.size);
+                uploadBtn.disabled = false;
+                uploadProgress.style.width = '0%';
+            } else {
+                resetUpload();
+            }
+        });
+
+        uploadBtn.addEventListener('click', () => {
+            if (selectedFile) uploadFile(selectedFile);
+        });
+
+        clearBtn.addEventListener('click', resetUpload);
+
+        refreshBtn.addEventListener('click', fetchFiles);
+
+        clearAllBtn.addEventListener('click', clearAllFiles);
+
+        // ========== INIT ==========
+
+        // Tampilkan base URL di footer
+        baseUrlDisplay.textContent = R2_BASE;
+
+        // Load files
+        fetchFiles();
+        resetUpload();
+
+        console.log('🚀 R2 Uploader siap!');
+        console.log('📡 Worker URL:', WORKER_URL);
+        console.log('📦 R2 Public URL:', R2_BASE);
+        console.log('💡 Ganti konfigurasi di bagian atas script');
+    </script>
+
+</body>
+</html>

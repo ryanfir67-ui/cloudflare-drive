@@ -1,0 +1,14 @@
+name = "cloudflare-drive"
+main = "src/worker.js"
+compatibility_date = "2026-06-06"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "ryy-storage"
+
+[vars]
+MAX_FILE_SIZE_GB = "10"
+
+routes = [
+  { pattern = "drive.ryy.my.id/*", zone_name = "ryy.my.id" }
+  ]
